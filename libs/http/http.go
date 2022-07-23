@@ -9,6 +9,10 @@ func Unauthorized(payload ...interface{}) Resp {
 	return error("unauthorized", payload...)
 }
 
+func BadRequest(payload ...interface{}) Resp {
+	return error("invalid data", payload...)
+}
+
 func InternalServErr(payload ...interface{}) Resp {
 	return error("internal server error", payload...)
 }
