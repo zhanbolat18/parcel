@@ -13,6 +13,10 @@ func BadRequest(payload ...interface{}) Resp {
 	return error("invalid data", payload...)
 }
 
+func Forbidden(payload ...interface{}) Resp {
+	return error("forbidden", payload...)
+}
+
 func InternalServErr(payload ...interface{}) Resp {
 	return error("internal server error", payload...)
 }
