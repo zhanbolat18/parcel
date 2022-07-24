@@ -22,7 +22,7 @@ func NewAuthController(srv *services.AuthService) *AuthController {
 // @Description  authorization on service with JWT token and return user info
 // @Produce      json
 // @Security 	 ApiKeyAuth
-// @Param 		 Authorization  header    string  true  "Authentication header"
+// @Param 		 Authorization  header    string  true  "Authentication header. Usage 'Bearer {token}'"
 // @Success      200  {object}  entities.User
 // @Failure      401  {object}  object{error=string}
 // @Failure      500  {string}  Internal Server Error
@@ -51,7 +51,7 @@ func (a *AuthController) Login(ctx *gin.Context) {
 	credDto := &dto.UserDto{}
 	err := ctx.BindJSON(credDto)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid format")})
+		ctx.JSON(http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid format %v", err)})
 		return
 	}
 	t, err := a.srv.Authentication(ctx, credDto.Email, credDto.Password)

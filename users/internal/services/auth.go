@@ -52,6 +52,9 @@ func (a *AuthService) Authorization(ctx context.Context, token string) (*entitie
 	if err != nil {
 		return nil, fmt.Errorf("get user by id \"%d\": %w", uId, err)
 	}
+	if !a.validStatus(u) {
+		return nil, errors.New("access denied")
+	}
 	return u, nil
 }
 

@@ -28,8 +28,32 @@ func (m *ManageDelivery) Create(ctx context.Context, recipient *entities.User, d
 	return delivery, nil
 }
 
-func (m *ManageDelivery) AssignToCourier(ctx context.Context, courierId, deliveryId uint) (*entities.Delivery, error) {
-	courier, err := m.usersRepo.GetCourier(courierId)
+func (m *ManageDelivery) GetAll(ctx context.Context) ([]*entities.Delivery, error) {
+	deliveries, err := m.deliveryRepo.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fetch all deliveries %w", err)
+	}
+	return deliveries, nil
+}
+
+func (m *ManageDelivery) GetOne(ctx context.Context, id uint) (*entities.Delivery, error) {
+	delivery, err := m.deliveryRepo.GetById(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get one delivery %w", err)
+	}
+	return delivery, nil
+}
+
+func (m *ManageDelivery) GetAllByCourier(ctx context.Context, courier *entities.User) ([]*entities.Delivery, error) {
+	deliveries, err := m.deliveryRepo.GetAllByCourier(ctx, courier.Id)
+	if err != nil {
+		return nil, fmt.Errorf("fetch all deliveries %w", err)
+	}
+	return deliveries, nil
+}
+
+func (m *ManageDelivery) AssignToCourier(ctx context.Context, deliveryId, courierId uint) (*entities.Delivery, error) {
+	courier, err := m.usersRepo.GetCourier(ctx, courierId)
 	if err != nil {
 		return nil, fmt.Errorf("get courier by id \"%d\": %w", courierId, err)
 	}
@@ -42,17 +66,21 @@ func (m *ManageDelivery) AssignToCourier(ctx context.Context, courierId, deliver
 	}
 	delivery.Status = valueobjects.Delivers
 	delivery.UpdatedAt = time.Now()
-	err = m.deliveryRepo.AssignToCourier(ctx, delivery, courier)
+	delivery.CourierId = &courier.Id
+	err = m.deliveryRepo.Update(ctx, delivery)
 	if err != nil {
 		return nil, fmt.Errorf("assign delivery: %w", err)
 	}
 	return delivery, nil
 }
 
-func (m *ManageDelivery) Complete(ctx context.Context, deliveryId uint) (*entities.Delivery, error) {
+func (m *ManageDelivery) Complete(ctx context.Context, deliveryId uint, courier *entities.User) (*entities.Delivery, error) {
 	delivery, err := m.deliveryRepo.GetById(ctx, deliveryId)
 	if err != nil {
 		return nil, fmt.Errorf("get delivery by id \"%d\": %w", deliveryId, err)
+	}
+	if delivery.CourierId != nil && *delivery.CourierId != courier.Id {
+		return nil, fmt.Errorf("forbidden")
 	}
 	if !m.isCompletable(delivery) {
 		return nil, errors.New("delivery is not completable")

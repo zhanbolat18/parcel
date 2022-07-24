@@ -48,6 +48,8 @@ func main() {
 		authMw *middlewares.AuthMiddleware, roleMw *middlewares.RoleMiddleware) {
 		engine.POST("/signup", c.SignUp)
 		engine.POST("/courier", authMw.Auth(), roleMw.CheckRole(valueobjects.Admin), c.CreateCourier)
+		engine.GET("/couriers", authMw.Auth(), roleMw.CheckRole(valueobjects.Admin), c.Couriers)
+		engine.GET("/couriers/:id", authMw.Auth(), roleMw.CheckRole(valueobjects.Admin), c.Courier)
 	}))
 	mustWork(c.Invoke(func(server *http.Server) {
 		go func() {

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/zhanbolat18/parcel/users/internal/entities"
@@ -29,6 +30,9 @@ func (u *user) GetById(ctx context.Context, id uint) (*entities.User, error) {
 	um := &userModel{}
 	err := u.db.GetContext(ctx, um, "SELECT * FROM users WHERE id=$1", id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return u.hydrateToEntity(um), nil
@@ -38,9 +42,25 @@ func (u *user) GetByEmail(ctx context.Context, email string) (*entities.User, er
 	um := &userModel{}
 	err := u.db.GetContext(ctx, um, "SELECT * FROM users WHERE email=$1", email)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return u.hydrateToEntity(um), nil
+}
+
+func (u *user) GetAllByRole(ctx context.Context, role valueobjects.Role) ([]*entities.User, error) {
+	um := make([]userModel, 0)
+	err := u.db.SelectContext(ctx, um, "SELECT * FROM users WHERE role=$1", role)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*entities.User, 0, len(um))
+	for _, model := range um {
+		users = append(users, u.hydrateToEntity(&model))
+	}
+	return users, nil
 }
 
 func (u *user) Save(ctx context.Context, user *entities.User) error {

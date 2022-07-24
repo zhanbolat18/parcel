@@ -1,6 +1,8 @@
 services:
   pgsql:
-    image: postgres:alpine
+    build:
+      context: .
+      dockerfile: PgSql.Dockerfile
     volumes:
       - ./.pgdata:/var/lib/postgresql/data
     ports:
@@ -8,7 +10,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRES_MULTIPLE_DATABASES=users,deliveries
   user:
     build:
       context: users/
@@ -16,10 +18,26 @@ services:
       - 8080:8080
     depends_on:
       - pgsql
+    restart: on-failure
     environment:
       - PG_HOST=pgsql
       - PG_PORT=5432
       - PG_USER=postgres
       - PG_PASSWORD=postgres
-      - PG_DBNAME=postgres
+      - PG_DBNAME=users
       - JWT_SIGN_KEY=customKey
+  deliveries:
+    build:
+      context: deliveries/
+    ports:
+      - 8081:8080
+    depends_on:
+      - pgsql
+    restart: on-failure
+    environment:
+      - PG_HOST=pgsql
+      - PG_PORT=5432
+      - PG_USER=postgres
+      - PG_PASSWORD=postgres
+      - PG_DBNAME=deliveries
+      - USERS_BASE_URL=http://user:8080

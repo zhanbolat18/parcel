@@ -46,7 +46,7 @@ func (m *mockRepos) GetAll(_ context.Context) ([]entities.Delivery, error) {
 
 func (m *mockRepos) AssignToCourier(_ context.Context, d *entities.Delivery, u *entities.User) error {
 	if dd, ok := m.deliveries[d.Id]; ok {
-		dd.Courier = u
+		dd.CourierId = u
 	}
 	return nil
 }
@@ -69,8 +69,8 @@ func TestManageDelivery_Create(t *testing.T) {
 	d, err := srv.Create(ctx, recip, "Some Address 1, 14")
 	asrt.Nil(err)
 	asrt.NotNil(d)
-	asrt.Equal(d.Recipient.Id, recip.Id)
-	asrt.Nil(d.Courier)
+	asrt.Equal(d.RecipientId.Id, recip.Id)
+	asrt.Nil(d.CourierId)
 	asrt.LessOrEqual(time.Now().Sub(d.CreatedAt).Milliseconds(), int64(1))
 	asrt.LessOrEqual(time.Now().Sub(d.UpdatedAt).Milliseconds(), int64(1))
 }
@@ -81,10 +81,10 @@ func TestManageDelivery_AssignToCourier(t *testing.T) {
 		4: {Id: 4, Email: "custom4@mail.com", Role: "user"},
 	}
 	deliveries := map[uint]*entities.Delivery{
-		1: {Id: 1, Status: valueobjects.Created, Recipient: users[1]},
-		2: {Id: 2, Status: valueobjects.Canceled, Recipient: users[1]},
-		3: {Id: 3, Status: valueobjects.Delivers, Recipient: users[1]},
-		4: {Id: 4, Status: valueobjects.Completed, Recipient: users[1]},
+		1: {Id: 1, Status: valueobjects.Created, RecipientId: users[1]},
+		2: {Id: 2, Status: valueobjects.Canceled, RecipientId: users[1]},
+		3: {Id: 3, Status: valueobjects.Delivers, RecipientId: users[1]},
+		4: {Id: 4, Status: valueobjects.Completed, RecipientId: users[1]},
 	}
 	repo := &mockRepos{users: users, deliveries: deliveries}
 	srv := services.NewManageDelivery(repo, repo)
@@ -106,10 +106,10 @@ func TestManageDelivery_AssignToCourier(t *testing.T) {
 		if testCase.success {
 			asrt.Nil(e)
 			asrt.NotNil(d)
-			asrt.Equal(d.Courier.Id, uint(testCase.userId))
+			asrt.Equal(d.CourierId.Id, uint(testCase.userId))
 		} else {
 			asrt.NotNil(e)
-			asrt.True(d == nil || d.Courier == nil || d.Courier.Id != uint(testCase.userId))
+			asrt.True(d == nil || d.CourierId == nil || d.CourierId.Id != uint(testCase.userId))
 		}
 	}
 }

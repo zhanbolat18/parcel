@@ -1,27 +1,28 @@
 basePath: /
 definitions:
-  dto.UserDto:
+  dto.Destination:
     properties:
-      email:
+      destination:
         type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
     type: object
-  entities.User:
+  entities.Delivery:
     properties:
-      email:
+      courier_id:
+        type: integer
+      createdAt:
+        type: string
+      destination:
         type: string
       id:
         type: integer
-      role:
-        type: string
+      recipient_id:
+        type: integer
       status:
         type: string
+      updatedAt:
+        type: string
     type: object
-host: localhost:8080
+host: localhost:8081
 info:
   contact:
     email: zhanbolat.nurutdin@gmail.com
@@ -29,95 +30,11 @@ info:
   title: Parcel Delivery Service
   version: "1.0"
 paths:
-  /auth:
-    post:
-      description: authorization on service with JWT token and return user info
-      parameters:
-      - description: Authentication header. Usage 'Bearer {token}'
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/entities.User'
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - type: object
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            type: string
-      security:
-      - ApiKeyAuth: []
-      summary: Authorization
-  /courier:
-    post:
-      consumes:
-      - application/json
-      description: Create courier account on service with email and password. Only
-        admin have permission.
-      parameters:
-      - description: courier info
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UserDto'
-      - description: Authentication header. Usage 'Bearer {token}'
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/entities.User'
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - type: object
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - type: object
-            - properties:
-                error:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - type: object
-            - properties:
-                error:
-                  type: string
-              type: object
-      summary: Create courier account
-  /couriers:
+  /deliveries:
     get:
-      description: Fetch all couriers account on service with email and password.
-        Only admin have permission.
+      description: |-
+        Fetch all deliveries. Only admin have permission to see all.
+        If endpoint called with courier, only assigned deliveries returned
       parameters:
       - description: Authentication header. Usage 'Bearer {token}'
         in: header
@@ -132,7 +49,7 @@ paths:
           schema:
             items:
               items:
-                $ref: '#/definitions/entities.User'
+                $ref: '#/definitions/entities.Delivery'
               type: array
             type: array
         "400":
@@ -162,29 +79,31 @@ paths:
                 error:
                   type: string
               type: object
-      summary: Fetch all couriers account
-  /couriers/{id}:
-    get:
-      description: Fetch one courier account on service with email and password. Only
-        admin have permission.
+      summary: fetch all deliveries
+    post:
+      consumes:
+      - application/json
+      description: create delivery order with required destination. Only user have
+        permission.
       parameters:
       - description: Authentication header. Usage 'Bearer {token}'
         in: header
         name: Authorization
         required: true
         type: string
-      - description: courier id
-        in: path
-        name: id
+      - description: destination info
+        in: body
+        name: message
         required: true
-        type: integer
+        schema:
+          $ref: '#/definitions/dto.Destination'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entities.User'
+            $ref: '#/definitions/entities.Delivery'
         "400":
           description: Bad Request
           schema:
@@ -212,31 +131,32 @@ paths:
                 error:
                   type: string
               type: object
-      summary: Fetch one courier account
-  /login:
-    post:
-      consumes:
-      - application/json
-      description: authentication on service with email and password
+      summary: create delivery order
+  /deliveries/{id}:
+    get:
+      description: |-
+        Get one delivery. Only admin have permission to see all.
+        If endpoint called with courier, only assigned deliveries returned
       parameters:
-      - description: login info
-        in: body
-        name: message
+      - description: Authentication header. Usage 'Bearer {token}'
+        in: header
+        name: Authorization
         required: true
-        schema:
-          $ref: '#/definitions/dto.UserDto'
+        type: string
+      - description: delivery id
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            allOf:
-            - type: object
-            - properties:
-                token:
-                  type: string
-              type: object
+            items:
+              $ref: '#/definitions/entities.Delivery'
+            type: array
         "400":
           description: Bad Request
           schema:
@@ -255,26 +175,37 @@ paths:
                 error:
                   type: string
               type: object
-      summary: Authentication
-  /signup:
-    post:
-      consumes:
-      - application/json
-      description: sign up on service with email and password
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - type: object
+            - properties:
+                error:
+                  type: string
+              type: object
+      summary: get one delivery
+  /deliveries/{id}/complete:
+    put:
+      description: Complete delivery. Only assigned courier have permission.
       parameters:
-      - description: courier info
-        in: body
-        name: message
+      - description: Authentication header. Usage 'Bearer {token}'
+        in: header
+        name: Authorization
         required: true
-        schema:
-          $ref: '#/definitions/dto.UserDto'
+        type: string
+      - description: delivery id
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entities.User'
+            $ref: '#/definitions/entities.Delivery'
         "400":
           description: Bad Request
           schema:
@@ -293,7 +224,70 @@ paths:
                 error:
                   type: string
               type: object
-      summary: SignUp
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - type: object
+            - properties:
+                error:
+                  type: string
+              type: object
+      summary: complete delivery
+  /deliveries/{id}/courier/{courierId}:
+    post:
+      description: assign to courier the delivery order. Only admin have permission.
+      parameters:
+      - description: Authentication header. Usage 'Bearer {token}'
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: delivery id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: courier id
+        in: path
+        name: courierId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Delivery'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - type: object
+            - properties:
+                error:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - type: object
+            - properties:
+                error:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - type: object
+            - properties:
+                error:
+                  type: string
+              type: object
+      summary: assign to courier
 schemes:
 - http
 swagger: "2.0"

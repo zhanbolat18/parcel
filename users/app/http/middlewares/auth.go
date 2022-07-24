@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	httpLib "github.com/zhanbolat18/parcel/libs/http"
 	"github.com/zhanbolat18/parcel/users/internal/services"
@@ -28,7 +29,8 @@ func (a *AuthMiddleware) Auth() gin.HandlerFunc {
 		token := header[len(BearerSchema):]
 		u, err := a.srv.Authorization(ctx, token)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, httpLib.Unauthorized())
+			fmt.Println(err)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, httpLib.Unauthorized(err))
 			return
 		}
 		ctx.Set("user", u)

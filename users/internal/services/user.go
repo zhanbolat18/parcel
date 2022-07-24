@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/zhanbolat18/parcel/users/internal/entities"
@@ -40,9 +39,28 @@ func (m *ManageUser) CreateCourier(ctx context.Context, email, password string) 
 	return u, err
 }
 
+func (m *ManageUser) Couriers(ctx context.Context) ([]*entities.User, error) {
+	users, err := m.repo.GetAllByRole(ctx, valueobjects.Courier)
+	if err != nil {
+		return nil, fmt.Errorf("get couriers: %w", err)
+	}
+	return users, nil
+}
+
+func (m *ManageUser) Courier(ctx context.Context, id uint) (*entities.User, error) {
+	users, err := m.repo.GetById(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get couriers: %w", err)
+	}
+	if users == nil || users.Role != valueobjects.Courier {
+		return nil, errors.New(fmt.Sprintf("courier with id \"%d\" not found", id))
+	}
+	return users, nil
+}
+
 func (m *ManageUser) createUser(ctx context.Context, email, password string, role valueobjects.Role) (*entities.User, error) {
 	u, err := m.repo.GetByEmail(ctx, email)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return nil, fmt.Errorf("get user by email \"%s\": %w", email, err)
 	}
 	if u != nil {

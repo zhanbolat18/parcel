@@ -6,11 +6,11 @@ import (
 )
 
 type Delivery struct {
-	Id          uint                `json:"id,omitempty"`
-	Status      valueobjects.Status `json:"status" json:"status,omitempty"`
-	Destination string              `json:"destination" json:"destination,omitempty"`
-	Recipient   *User               `json:"recipient" json:"recipient,omitempty"`
-	Courier     *User               `json:"courier,omitempty" json:"courier,omitempty"`
+	Id          uint                `json:"id"`
+	Status      valueobjects.Status `json:"status"`
+	Destination string              `json:"destination"`
+	RecipientId uint                `json:"recipient_id"`
+	CourierId   *uint               `json:"courier_id,omitempty"`
 	CreatedAt   time.Time           `json:"createdAt"`
 	UpdatedAt   time.Time           `json:"updatedAt"`
 }
@@ -18,7 +18,7 @@ type Delivery struct {
 func NewDelivery(destination string, recipient *User) *Delivery {
 	return &Delivery{
 		Destination: destination,
-		Recipient:   recipient,
+		RecipientId: recipient.Id,
 		Status:      valueobjects.Created,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),

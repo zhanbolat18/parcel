@@ -6,6 +6,7 @@ import (
 	"github.com/zhanbolat18/parcel/users/app/dto"
 	"github.com/zhanbolat18/parcel/users/internal/services"
 	"net/http"
+	"strconv"
 )
 
 type UserController struct {
@@ -43,7 +44,7 @@ func (u *UserController) SignUp(ctx *gin.Context) {
 // @Accept 		 json
 // @Produce      json
 // @Param        message  body  dto.UserDto  true  "courier info"
-// @Param 		 Authorization  header    string  true  "Authentication header"
+// @Param 		 Authorization  header    string  true  "Authentication header. Usage 'Bearer {token}'"
 // @Success      200  {object}  entities.User
 // @Failure      400  {object}  object{error=string}
 // @Failure      401  {object}  object{error=string}
@@ -62,4 +63,49 @@ func (u *UserController) CreateCourier(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, user)
+}
+
+// Couriers godoc
+// @Summary      Fetch all couriers account
+// @Description  Fetch all couriers account on service with email and password. Only admin have permission.
+// @Produce      json
+// @Param 		 Authorization  header    string  true  "Authentication header. Usage 'Bearer {token}'"
+// @Success      200  {array}  []entities.User
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      403  {object}  object{error=string}
+// @Router       /couriers [get]
+func (u *UserController) Couriers(ctx *gin.Context) {
+	users, err := u.srv.Couriers(ctx)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httpLib.BadRequest(err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, users)
+}
+
+// Courier godoc
+// @Summary      Fetch one courier account
+// @Description  Fetch one courier account on service with email and password. Only admin have permission.
+// @Produce      json
+// @Param 		 Authorization  header    string  true  "Authentication header. Usage 'Bearer {token}'"
+// @Param		 id		path	integer	true	"courier id"
+// @Success      200  {object}  entities.User
+// @Failure      400  {object}  object{error=string}
+// @Failure      401  {object}  object{error=string}
+// @Failure      403  {object}  object{error=string}
+// @Router       /couriers/{id} [get]
+func (u *UserController) Courier(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if idStr == "" || err != nil || id < 1 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httpLib.BadRequest("invalid id"))
+		return
+	}
+	users, err := u.srv.Courier(ctx, uint(id))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, httpLib.BadRequest(err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, users)
 }
